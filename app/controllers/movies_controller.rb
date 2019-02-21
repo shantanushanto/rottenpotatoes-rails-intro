@@ -11,9 +11,27 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @movies = Movie.all 
+    #@movies = Movie.all
+    #@movies = Movie.get_movie_by_ratings(["R","G"])
+ 
     @title_id = "title_header"
     @date_id = "release_date_header"
+    @form_id = "ratings_form"
+    @form_submit_id = "ratings_submit"
+    
+    @all_ratings = Movie.get_possible_ratings # this is for part2
+    
+
+    unless params[:ratings].nil?
+      @filtered_ratings = params[:ratings].keys
+      #session[:filtered_ratings] = @filtered_ratings
+      #@movies = Movie.order("title asc").find_all_by_rating(@filtered_ratings)
+      #render :text => @filtered_ratings.inspect
+      @movies = Movie.get_movie_by_ratings(@filtered_ratings)
+      return
+    end
+
+
     if params[:title_sort] == "on"
       @movies = Movie.order("title asc")
       @movie_highlight = "hilite"
