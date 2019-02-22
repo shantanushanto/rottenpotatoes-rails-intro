@@ -20,8 +20,9 @@ class MoviesController < ApplicationController
     @form_submit_id = "ratings_submit"
     
     @all_ratings = Movie.get_possible_ratings # this is for part2
-    
-
+    @first_time = 0 
+    @session = 0
+=begin
     unless params[:ratings].nil?
       @filtered_ratings = params[:ratings].keys
       #session[:filtered_ratings] = @filtered_ratings
@@ -30,17 +31,63 @@ class MoviesController < ApplicationController
       @movies = Movie.get_movie_by_ratings(@filtered_ratings)
       return
     end
+=end
+    #session.clear
 
+    if params[:ratings].nil? && params[:commit]=="Refresh"
+        session.delete(:ratings)
+    end
 
-    if params[:title_sort] == "on"
-      @movies = Movie.order("title asc")
-      @movie_highlight = "hilite"
-    elsif params[:date_sort] == "on"
-      @movies = Movie.order("release_date asc")
-      @date_highlight = "hilite"
+    if !params[:ratings].nil?
+        @ratings = params[:ratings].keys
+        @ratings_key = params[:ratings]
+    elsif !session[:ratings].nil?
+        @ratings = session[:ratings].keys
+        @ratings_key = session[:ratings]
+        @session = 1
+        
+    else 
+        @ratings = @all_ratings
+        @first_time = 1
+    end
+
+    if params[:sort] == "title" 
+        @sorting = "title"
+        @movie_highlight = "hilite"
+    elsif params[:sort] == "release_date"  
+        @sorting = "release_date"
+        @date_highlight = "hilite"
+    elsif session[:sorting] == "title"
+        @sorting = "title"
+        @movie_highlight = "hilite"
+
+        @session = 1
+    elsif session[:sorting] == "release_date" 
+        @sorting = "release_date"
+        @date_highlight = "hilite"
+
+        @session = 1
     else
-      @movies = Movie.all
-    end    
+        @sorting = "title"
+    end
+
+    if session[:redirect] == 0
+        session[:redirect] = 1
+        if params[:ratings].nil? && params[:commit]=="Refresh"
+            redirect_to movies_path(:sort=>@sorting)
+        else
+            redirect_to movies_path(:sort=>@sorting, :ratings=>@ratings_key)
+        end
+    else 
+        session[:redirect] = 0
+    end
+    
+    @movies = Movie.get_movie_by_ratings(@ratings).order(@sorting)
+
+    session[:ratings] = @ratings_key
+    session[:sorting] = @sorting
+    return 
+
   end
 
   def new
